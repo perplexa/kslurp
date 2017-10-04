@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+# http://github.com/perplexa
+
+import argparse
+import asyncio
+import collections
+import random
+import subprocess
+import sys
+
+from concurrent.futures import ProcessPoolExecutor
+
+colors = range(30, 223)
+
+def colorize(color, message):
+    return '\033[38;5;{c}m{m}\033[0m'.format(c=color, m=message)
+
+def log(pod, message, width=0):
+    print('[{p:{w}}] {m}'.format(p=pod, m=message, w=width))
+
+def clean(pod):
+    return pod.replace('pods/', '', 1)
+
+def pods(labels):
+    pods = subprocess.run([
+            "kubectl", "get", "pods",
+            "-o", "name",
+            "-l", labels],
+        stdout=subprocess.PIPE)
+    pods = pods.stdout.decode().strip().split('\n')
+
+    width = max(map(len, pods))
+    return [(width, (p, colorize(random.choice(colors), clean(p)))) for p in pods if p]
+
+def subscribe(width, pod):
+    print('Subscribing to log of pod ' + pod[1])
+    pipe = subprocess.Popen([
+            "kubectl",
+            "logs",
+            "--tail", "10",
+            "--follow", pod[0]],
+        stdout=subprocess.PIPE)
+
+    while True:
+        if pipe.poll() is not None:
+            break
+        log(pod[1], pipe.stdout.readline().decode().rstrip(), width=width)
+
+if __name__ == '__main__':
+    parser = parser = argparse.ArgumentParser(prog='kslurp')
+    parser.add_argument(
+        '-l','--selector',
+        help="Selector (label query) to filter on, supports '=', '==', and '!='.",
+        required=True)
+    args = parser.parse_args()
+
+    podl = pods(args.selector)
+
+    if not podl:
+        print('Could not find any pods with selector: {}'.format(args.selector), file=sys.stderr)
+        sys.exit(1)
+
+    executor = ProcessPoolExecutor(len(podl))
+    loop = asyncio.get_event_loop()
+
+    for width, pod in podl:
+        asyncio.ensure_future(loop.run_in_executor(executor, subscribe, width, pod))
+
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        print("\rExiting..")
