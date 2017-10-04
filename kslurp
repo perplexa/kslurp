@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-# http://github.com/perplexa
 
 import argparse
 import asyncio
-import collections
 import logging
 import random
 import subprocess
