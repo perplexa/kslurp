@@ -66,11 +66,12 @@ if __name__ == '__main__':
     executor = ProcessPoolExecutor(len(podl))
     loop = asyncio.get_event_loop()
 
+    futures = []
     for pod, color, width in podl:
-        asyncio.ensure_future(loop.run_in_executor(executor, subscribe, pod, color, width))
+        futures.append(asyncio.ensure_future(loop.run_in_executor(executor, subscribe, pod, color, width)))
 
     try:
-        loop.run_forever()
+        loop.run_until_complete(asyncio.gather(*futures))
     except KeyboardInterrupt:
         print("\rExiting..")
 
