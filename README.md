@@ -6,6 +6,6 @@ Takes a label selector parameter and attaches to log output of multiple pods mat
 
 `./kslurp --selector=name=mypod`
 
-Press `CTRL+C` to stop consuming logs quit.
+Press `CTRL+C` to stop consuming logs.
 
 ![example output](https://ptpb.pw/mQt8.png)
