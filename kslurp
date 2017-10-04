@@ -28,10 +28,10 @@ def pods(labels):
             "-o", "name",
             "-l", labels],
         stdout=subprocess.PIPE)
-    pods = pods.stdout.decode().strip().split('\n')
-
+    pods = list(map(clean, pods.stdout.decode().strip().split('\n')))
     width = max(map(len, pods))
-    return [(clean(p), random.choice(colors), width) for p in pods if p]
+
+    return [(p, random.choice(colors), width) for p in pods if p]
 
 def subscribe(pod, color, width):
     print('Subscribing to log of pod ' + colorize(pod, color))
