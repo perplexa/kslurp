@@ -78,7 +78,8 @@ func pods(selector *string) []*Pod {
     cmd := kubeExec("get", "pod", "--output", jsp, "--selector", *selector)
     out, err := cmd.CombinedOutput()
     if err != nil {
-        fmt.Printf("kubectl error: %s\n", err)
+        fmt.Printf("kubectl (%s): %s", err, string(out))
+        os.Exit(1)
     }
     kpods := strings.Split(strings.Trim(string(out), " \n"), "\n")
 
