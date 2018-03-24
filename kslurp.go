@@ -47,6 +47,9 @@ func (p *Pod) WideName() string {
 
 func (p *Pod) Subscribe(ctrl *Control, log chan string) {
 	fmt.Println("Subscribed to", p.Name())
+	defer func() {
+        ctrl.stop <- p.Name()
+    }()
 
 	cmd := kubeExec("log", "--tail", "10", "--follow", p.name, p.container)
 	ctrl.cmds <- cmd
@@ -62,7 +65,6 @@ func (p *Pod) Subscribe(ctrl *Control, log chan string) {
 
 	cmd.Start()
 	cmd.Wait()
-	ctrl.stop <- p.Name()
 }
 
 func kubeExec(args ...string) *exec.Cmd {
